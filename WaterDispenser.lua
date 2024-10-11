@@ -35,24 +35,24 @@ wenn schon was im lootfenster ist, nicht auffüllen.
 0.13
 - Add additional button to the trade window
 - checks minimum level for an conjured item
-- support cast button, when conjured water is missing 
+- support cast button, when conjured water is missing
 --]]
 
 local DEBUGMODE=false
 
 
 local TOCNAME,ADDON=...
-local L = setmetatable({}, {__index = function (t, k)  
-	if ADDON.L and ADDON.L[k] then 
+local L = setmetatable({}, {__index = function (t, k)
+	if ADDON.L and ADDON.L[k] then
 		return ADDON.L[k]
 	else
 		return "["..k.."]"
-	end	
+	end
 end})
 WATERDISPENSER_ADDON=ADDON
-ADDON.Version=GetAddOnMetadata(TOCNAME, "Version") 
+ADDON.Version=GetAddOnMetadata(TOCNAME, "Version")
 ADDON.SettingsVersion=3
-ADDON.Title=GetAddOnMetadata(TOCNAME, "Title") 
+ADDON.Title=GetAddOnMetadata(TOCNAME, "Title")
 ADDON.PREFIX="[WD]: "
 
 local T=":0:0:0:0:64:64:4:60:4:60"
@@ -104,15 +104,15 @@ function ADDON.ClearInventroy()
 	ADDON.Inventory=nil
 end
 function ADDON.GetInventory()
-	OldInventory=ADDON.Inventory 
-	
+	OldInventory=ADDON.Inventory
+
 	ADDON.Inventory={}
 	ADDON.InventoryLockbox=nil
-	
+
 	for itemCollection,spells in pairs(ADDON.SpellList) do
 		for spell,itemID in pairs(spells) do
 			if IsSpellKnown(spell) or DEBUGMODE then
-				local itemName, itemLink, _, _, itemMinLevel, _, _, itemStackCount, _, itemIcon, _, itemClassID, _, bindType= GetItemInfo(itemID) 
+				local itemName, itemLink, _, _, itemMinLevel, _, _, itemStackCount, _, itemIcon, _, itemClassID, _, bindType= GetItemInfo(itemID)
 				ADDON.Inventory[itemID]={
 							link=itemLink,
 							name=itemName,
@@ -130,7 +130,7 @@ function ADDON.GetInventory()
 	for bag=BACKPACK_CONTAINER , NUM_BAG_SLOTS do
 		for slot=1,C_Container.GetContainerNumSlots(bag) do
 			local containerInfo = C_Container.GetContainerItemInfo(bag, slot)
-			if containerInfo then 
+			if containerInfo then
 				local itemCount = containerInfo.stackCount
 				local lootable = containerInfo.hasLoot
 				local itemLink = containerInfo.hyperlink
@@ -141,13 +141,13 @@ function ADDON.GetInventory()
 						if text==LOCKED then
 							ADDON.InventoryLockbox={Bag=bag,Slot=slot}
 						end
-					end				
+					end
 				end
-			
-			
-				local itemName, _, _, _, itemMinLevel, _, _, itemStackCount, _, itemIcon, _, itemClassID, _, bindType= GetItemInfo(itemID) 
+
+
+				local itemName, _, _, _, itemMinLevel, _, _, itemStackCount, _, itemIcon, _, itemClassID, _, bindType= GetItemInfo(itemID)
 				if itemClassID==LE_ITEM_CLASS_CONSUMABLE and bindType==0 then
-				
+
 					local classId= ADDON.CombineItemId[itemID] or itemID
 
 					if not ADDON.Inventory[classId] then
@@ -164,56 +164,56 @@ function ADDON.GetInventory()
 					--print(itemLink,itemStackCount,itemCount)
 					tinsert(ADDON.Inventory[classId].bag,{
 						["bag"]=bag,
-						["slot"]=slot,	
+						["slot"]=slot,
 						["full"]=itemStackCount==itemCount,
-					})				
+					})
 				end
 			end
 		end
 	end
-	
+
 	if OldInventory then
 		for id,item in pairs(ADDON.Inventory) do
 			if #item.bag ~= (OldInventory[id] and #OldInventory[id].bag or 0) then
 				return true
 			end
 		end
-		return false	
+		return false
 	end
 	return true
 end
 
 function ADDON.ClearTrade()
-	if not ADDON.TradeClass then 
+	if not ADDON.TradeClass then
 		print(ADDON.PREFIX,L.errNoTrade)
 		return
 	end
-	
+
 	for i=1,MAX_TRADABLE_ITEMS do
 		ClearCursor()
-		ClickTradeButton(i)		
+		ClickTradeButton(i)
 	end
 	ClearCursor()
 end
 
 function ADDON.FillTrade(forced)
-	if not ADDON.TradeClass then 
+	if not ADDON.TradeClass then
 		print(ADDON.PREFIX,L.errNoTrade)
 		return
 	end
-	
+
 	if not ADDON.GetInventory() and not forced then
 		return true
 	end
-	
+
 	local colMax={}
 	local colItemId={}
 
-	for id,x in pairs(ADDON.SpellList) do 
+	for id,x in pairs(ADDON.SpellList) do
 		colItemId[id]=0
 		colMax[id]=0
 	end
-	
+
 	for id,item in pairs(ADDON.Inventory) do
 		if item.collection then
 			if (colMax[item.collection] or 0)< item.level and ADDON.TradeLevel >= item.level then
@@ -222,38 +222,38 @@ function ADDON.FillTrade(forced)
 			end
 		end
 	end
-	
+
 	ADDON.MissingStack=false
 	if not ADDON.DontClear then
 		ADDON.ClearTrade()
 	else
 		ADDON.DontClear=false
 	end
-	
-	if ADDON.DB.Locked and ADDON.InventoryLockbox and ADDON.TradeClass=="ROGUE" then 
+
+	if ADDON.DB.Locked and ADDON.InventoryLockbox and ADDON.TradeClass=="ROGUE" then
 		ClearCursor()
 		C_Container.PickupContainerItem(ADDON.InventoryLockbox.Bag, ADDON.InventoryLockbox.Slot)
 		ClickTradeButton(TRADE_ENCHANT_SLOT)
 	end
-	
+
 
 	local inventory=ADDON.Inventory
-	
+
 	local tradePos
 	for id,SaveItem in pairs(ADDON.DB.Item) do
 		local count
 
 		if ADDON.TradeParty then
-			if IsInRaid() then 
+			if IsInRaid() then
 				count=SaveItem.Raid[ADDON.TradeClass] or 0
 			else
 				count=SaveItem.Group[ADDON.TradeClass] or 0
 			end
 		else
-			count=SaveItem.Solo[ADDON.TradeClass] or 0		
+			count=SaveItem.Solo[ADDON.TradeClass] or 0
 		end
-		
-		if count>0 then 
+
+		if count>0 then
 			local inv
 			if colItemId[id] then
 				inv=inventory[colItemId[id]]
@@ -263,28 +263,28 @@ function ADDON.FillTrade(forced)
 			else
 				inv=inventory[id]
 			end
-			
+
 			if inv then
-				
+
 				for ibag,item in ipairs(inv.bag) do
-					if item.full then 
+					if item.full then
 						ClearCursor()
 						C_Container.PickupContainerItem(item.bag, item.slot)
 						tradePos=TradeFrame_GetAvailableSlot()
 						if tradePos==nil then
 							return
 						end
-						ClickTradeButton(tradePos)						
+						ClickTradeButton(tradePos)
 						count=count-1
 						if count<=0 then
 							break
-						end						
+						end
 					end
 				end
 				-- not full stack
 				if count>0 and SaveItem.UseNotFullStack then
 					for ibag,item in ipairs(inv.bag) do
-						if not item.full then 
+						if not item.full then
 							ClearCursor()
 							C_Container.PickupContainerItem(item.bag, item.slot)
 							tradePos=TradeFrame_GetAvailableSlot()
@@ -295,51 +295,51 @@ function ADDON.FillTrade(forced)
 							count=count-1
 							if count<=0 then
 								break
-							end						
+							end
 						end
-					end								
+					end
 				end
-											
+
 			end
 			if count>0 then
 				ADDON.MissingStack=true
 				if inv then
 					print(ADDON.PREFIX,L.MissingStack,(inv.icon and ("|T"..inv.icon..T.."|t") or "")..inv.name,"x"..count)
-					
-					if inv.spellId and inv.collection and ADDON.Frame.Btn[inv.collection] then		
+
+					if inv.spellId and inv.collection and ADDON.Frame.Btn[inv.collection] then
 						ADDON.Frame.Btn[inv.collection]:SetSpell(inv.spellId)
 					end
 				else
 					print(ADDON.PREFIX,L.MissingStack,(SaveItem and ("|T"..SaveItem.icon..T.."|t") or "")..SaveItem.name,"x"..count)
 				end
-					
+
 			end
 		end
 	end
-	
-	
+
+
 	if IsSpellKnown(ADDON.SpellPickLock) then
 		ADDON.Frame.Btn.PickLock:SetSpell(ADDON.SpellPickLock)
 	end
-	
-	
-	
+
+
+
 end
 
 local function OptionSelectedID(id)
 
 	ADDON.OptionItemId=id
-	
+
 	local x
 	if ADDON.DB.Item[id] then
 		x=ADDON.DB.Item[id]
 	else
 		x=ADDON.Inventory[id]
 	end
-	
-	
+
+
 	ADDON.Options.EditCategory(ADDON.OptionItemName,(x.icon and ("|T"..x.icon..T.."|t") or "")..x.name .." ".. L.inStacks)
-	
+
 	if x.Solo then
 		for i,class in ipairs(ADDON.Tool.Classes) do
 			ADDON.ClassListSolo[class] =ADDON.DB.Item[id].Solo[class] or 0
@@ -347,16 +347,16 @@ local function OptionSelectedID(id)
 			ADDON.ClassListRaid[class] =ADDON.DB.Item[id].Raid[class] or 0
 		end
 		ADDON.ClassListSolo.UseNotFullStack=ADDON.DB.Item[id].UseNotFullStack or false
-		
+
 		ADDON.OptionButSave:Enable()
 		if x.noRemove then
 			ADDON.OptionButRemove:Disable()
 			ADDON.OptionsCboxUseNotFullStack:Hide()
-		else		
+		else
 			ADDON.OptionButRemove:Enable()
 			ADDON.OptionsCboxUseNotFullStack:Show()
 		end
-		
+
 	else
 		for i,class in ipairs(ADDON.Tool.Classes) do
 			ADDON.ClassListSolo[class]=0
@@ -367,17 +367,17 @@ local function OptionSelectedID(id)
 		ADDON.OptionButSave:Enable()
 		ADDON.OptionButRemove:Disable()
 		ADDON.OptionsCboxUseNotFullStack:Show()
-	end	
-	
-	ADDON.Options.DoCancel(ADDON.ClassListSolo) 
+	end
+
+	ADDON.Options.DoCancel(ADDON.ClassListSolo)
 	ADDON.Options.DoCancel(ADDON.ClassListGroup)
-	ADDON.Options.DoCancel(ADDON.ClassListRaid) 
+	ADDON.Options.DoCancel(ADDON.ClassListRaid)
 end
 local function OptionSave()
 	if ADDON.OptionItemId then
-		ADDON.Options.DoOk(ADDON.ClassListSolo) 
-		ADDON.Options.DoOk(ADDON.ClassListGroup) 
-		ADDON.Options.DoOk(ADDON.ClassListRaid) 
+		ADDON.Options.DoOk(ADDON.ClassListSolo)
+		ADDON.Options.DoOk(ADDON.ClassListGroup)
+		ADDON.Options.DoOk(ADDON.ClassListRaid)
 		local id=ADDON.OptionItemId
 		if ADDON.DB.Item[id]==nil then
 			ADDON.DB.Item[id]={
@@ -385,16 +385,16 @@ local function OptionSave()
 				icon=ADDON.Inventory[id].icon,
 				Solo={},
 				Group={},
-				Raid={},				
+				Raid={},
 			}
 		end
-		for i,class in ipairs(ADDON.Tool.Classes) do			
+		for i,class in ipairs(ADDON.Tool.Classes) do
 			ADDON.DB.Item[id].Solo[class]=ADDON.ClassListSolo[class]
 			ADDON.DB.Item[id].Group[class]=ADDON.ClassListGroup[class]
 			ADDON.DB.Item[id].Raid[class]=ADDON.ClassListRaid[class]
 		end
 		ADDON.DB.Item[id].UseNotFullStack=ADDON.ClassListSolo.UseNotFullStack
-		
+
 		print(ADDON.PREFIX,L.Saved, ADDON.DB.Item[id].name)
 	end
 
@@ -408,23 +408,23 @@ local function OptionOpenMenu(self)
 	ADDON.PopupDynamic:AddItem(L.Stored,true)
 	local list={}
 	for id,item in pairs(ADDON.DB.Item) do
-		tinsert(list,{ (item.icon and ("|T"..item.icon..T.."|t") or "").. item.name,id})		
+		tinsert(list,{ (item.icon and ("|T"..item.icon..T.."|t") or "").. item.name,id})
 	end
 	table.sort(list,function(a,b) return a[1]<b[1] end)
 	for i,x in ipairs(list) do
 		ADDON.PopupDynamic:AddItem(x[1],false,OptionSelectedID,x[2])
 	end
-	
+
 	ADDON.PopupDynamic:AddItem(L.Available,true)
 	wipe (list)
 	for id,item in pairs(ADDON.Inventory) do
 		if not ADDON.DB.Item[id] and not item.collection then
-			tinsert(list,{ (item.icon and ("|T"..item.icon..T.."|t") or "")..   item.name,id})		
+			tinsert(list,{ (item.icon and ("|T"..item.icon..T.."|t") or "")..   item.name,id})
 		end
 	end
 	for itemCollection,spells in pairs(ADDON.SpellList) do
 		if not ADDON.DB.Item[itemCollection] then
-			tinsert(list,{L[itemCollection],itemCollection})			
+			tinsert(list,{L[itemCollection],itemCollection})
 		end
 	end
 	table.sort(list,function(a,b) return a[1]<b[1] end)
@@ -441,24 +441,24 @@ local function OptionClear()
 		ADDON.ClassListRaid[class]=0
 	end
 	ADDON.Options.EditCategory(ADDON.OptionItemName,L.PlaceHolderSelect)
-	
+
 	ADDON.ClassListSolo.UseNotFullStack=false
-		
+
 	ADDON.OptionItemId=nil
 	ADDON.OptionButSave:Disable()
 	ADDON.OptionButRemove:Disable()
 	ADDON.OptionsCboxUseNotFullStack:Show()
-	
-	ADDON.Options.DoCancel(ADDON.ClassListSolo) 
+
+	ADDON.Options.DoCancel(ADDON.ClassListSolo)
 	ADDON.Options.DoCancel(ADDON.ClassListGroup)
-	ADDON.Options.DoCancel(ADDON.ClassListRaid) 
-	
+	ADDON.Options.DoCancel(ADDON.ClassListRaid)
+
 end
 
 local function OptionRemove()
 	if ADDON.OptionItemId then
 		print(ADDON.PREFIX,L.Removed, ADDON.DB.Item[ADDON.OptionItemId ].name)
-		ADDON.DB.Item[ADDON.OptionItemId]=nil		
+		ADDON.DB.Item[ADDON.OptionItemId]=nil
 	end
 	OptionClear()
 end
@@ -466,22 +466,26 @@ end
 function ADDON.OptionsInit()
 	ADDON.Options.Init(
 		function()--doOk
-			ADDON.Options.DoOk() 
+			ADDON.Options.DoOk()
 			OptionClear()
 		end,
 		function()--doCancel
-			ADDON.Options.DoCancel() 
+			ADDON.Options.DoCancel()
 			OptionClear()
 		end,
 		function()--doDefault
-			ADDON.Options.DoDefault() 
+			ADDON.Options.DoDefault()
 			OptionClear()
 		end
 	)
-		
-	ADDON.Options.AddPanel(ADDON.Title)
+
+	local mainPanel = ADDON.Options.AddPanel(ADDON.Title)
+	local mainCategory = Settings.RegisterCanvasLayoutCategory(mainPanel, ADDON.Title)
+	mainCategory.ID = ADDON.Title
+	Settings.RegisterAddOnCategory(mainCategory)
+
 	ADDON.Options.AddVersion('|cff00c0ff' .. ADDON.Version .. "|r")
-	
+
 	ADDON.Options.AddCheckBox(ADDON.DB,"AutoFillSolo",true,L.cboxAutoFillSolo)
 	ADDON.Options.AddCheckBox(ADDON.DB,"AutoFillGroup",true,L.cboxAutoFillGroup)
 	ADDON.Options.AddCheckBox(ADDON.DB,"AutoFillRaid",true,L.cboxAutoFillRaid)
@@ -491,86 +495,87 @@ function ADDON.OptionsInit()
 	ADDON.Options.AddButton(L.SelectItem,OptionOpenMenu)
 	ADDON.Options.AddSpace()
 	ADDON.OptionItemName=ADDON.Options.AddCategory(L.PlaceHolderSelect)
-	
+
 	ADDON.Options.Indent(10)
 	ADDON.ClassListSolo={}
 	ADDON.ClassListGroup={}
 	ADDON.ClassListRaid={}
-	
+
 	ADDON.Options.AnchorRightSide()
-	ADDON.Options.AddText(" ")		
+	ADDON.Options.AddText(" ")
 	for i,class in ipairs(ADDON.Tool.Classes) do
 		ADDON.Options.AddEditBox(ADDON.ClassListSolo,class,0,
 			ADDON.Tool.IconClass[class] .. "|c" .. ADDON.Tool.ClassColor[class].colorStr .. ADDON.Tool.ClassName[class],
-			20,150,true)			
+			20,150,true)
 	end
-	
+
 	ADDON.Options.SetRightSide(155)
-	ADDON.Options.AddText(L.Solo)	
-	
+	ADDON.Options.AddText(L.Solo)
+
 	ADDON.Options.SetRightSide(220)
-	ADDON.Options.AddText(L.Group)	
+	ADDON.Options.AddText(L.Group)
 	ADDON.Options.Indent(5)
 	for i,class in ipairs(ADDON.Tool.Classes) do
 		ADDON.Options.AddEditBox(ADDON.ClassListGroup,class,0,
 			"",
-			20,0,true)			
+			20,0,true)
 	end
-	
+
 	ADDON.Options.SetRightSide(285)
-	ADDON.Options.AddText(L.Raid)	
+	ADDON.Options.AddText(L.Raid)
 	ADDON.Options.Indent(5)
 	for i,class in ipairs(ADDON.Tool.Classes) do
 		ADDON.Options.AddEditBox(ADDON.ClassListRaid,class,0,
 			"",
-			20,0,true)			
+			20,0,true)
 	end
-		
+
 	ADDON.Options.EndRightSide()
 	ADDON.OptionsCboxUseNotFullStack=ADDON.Options.AddCheckBox(ADDON.ClassListSolo,"UseNotFullStack",false,L.cboxUseNotFullStack)
-	
+
 	ADDON.Options.AddSpace()
 	ADDON.Options.InLine()
 	ADDON.OptionButSave=ADDON.Options.AddButton(L.Save,OptionSave)
 	ADDON.OptionButRemove=ADDON.Options.AddButton(L.Remove,OptionRemove)
 	ADDON.Options.EndInLine()
 	ADDON.Options.Indent(-10)
-	
+
 	local function SlashText(txt)
 		ADDON.Options.AddText(txt)
 	end
-	ADDON.Options.AddPanel(L["PanelAbout"])
+	local subPanel = ADDON.Options.AddPanel(L["PanelAbout"])
+	Settings.RegisterCanvasLayoutSubcategory(mainCategory, subPanel, L["PanelAbout"])
 
 	ADDON.Options.AddCategory("|cFFFF1C1C"..GetAddOnMetadata(TOCNAME, "Title") .." ".. GetAddOnMetadata(TOCNAME, "Version") .." by "..GetAddOnMetadata(TOCNAME, "Author"))
 	ADDON.Options.Indent(10)
-	ADDON.Options.AddText(GetAddOnMetadata(TOCNAME, "Notes"))		
+	ADDON.Options.AddText(GetAddOnMetadata(TOCNAME, "Notes"))
 	ADDON.Options.Indent(-10)
-	
+
 	ADDON.Options.AddCategory(L["HeaderInfo"])
 	ADDON.Options.Indent(10)
 	ADDON.Options.AddText(L["AboutInfo"],-20)
 	ADDON.Options.Indent(-10)
-	
+
 	ADDON.Options.AddCategory(L["HeaderUsage"])
 	ADDON.Options.Indent(10)
 	ADDON.Options.AddText(L["AboutUsage"],-20)
 	ADDON.Options.Indent(-10)
-	
+
 	ADDON.Options.AddCategory(L["HeaderSlashCommand"])
 	ADDON.Options.Indent(10)
 	ADDON.Options.AddText(L["AboutSlashCommand"],-20)
 	ADDON.Tool.PrintSlashCommand(nil,nil,SlashText)
 	ADDON.Options.Indent(-10)
-	
-	if L["AboutCredits"]~="" then 
+
+	if L["AboutCredits"]~="" then
 		ADDON.Options.AddCategory(L["HeaderCredits"])
 		ADDON.Options.Indent(10)
 		ADDON.Options.AddText(L["AboutCredits"],-20)
 		ADDON.Options.Indent(-10)
 	end
-	
-	
-	
+
+
+
 end
 
 
@@ -591,15 +596,15 @@ local function Event_TRADE_SHOW()
 		ADDON.TradeLevel=UnitLevel("player")+10
 	end
 	ADDON.TradeParty=UnitInParty("NPC") or UnitInRaid("NPC")
-	
+
 	ADDON.Frame:ShowParent(ADDON.TradeFrame)
-	
+
 	ADDON.ClearInventroy()
-	
+
 	if DEBUGMODE then
 		print(ADDON.TradeName,ADDON.TradeClass, ADDON.TradeLevel,ADDON.TradeParty)
 	end
-	
+
 	local x
 	if ADDON.TradeParty then
 		if IsInRaid() then
@@ -610,13 +615,13 @@ local function Event_TRADE_SHOW()
 	else
 		x=ADDON.DB.AutoFillSolo
 	end
-	
+
 	ADDON.DontClear=true
 
-	if x then 
-		ADDON.FillTrade(false)	
+	if x then
+		ADDON.FillTrade(false)
 	end
-	
+
 end
 local function Event_TRADE_CLOSED()
 	ADDON.TradeName=nil
@@ -632,12 +637,12 @@ local function Event_ADDON_LOADED(arg1)--init!
 		if not WaterDispenserDB then WaterDispenserDB = {} end
 
 		ADDON.DB=WaterDispenserDB
-		
+
 		--convert options
 		if not WaterDispenserDB.Version or WaterDispenserDB.Version < 2 then
 			--reset settings
 			WaterDispenserDB.Version=2
-			WaterDispenserDB.Item = {}	
+			WaterDispenserDB.Item = {}
 			ADDON.DB.Item.MageWater={
 				noRemove=true,
 				Solo= {["HUNTER"] = 2,["WARRIOR"] = 0,["SHAMAN"] = 2,["MAGE"] = 0,["PRIEST"] = 2,["WARLOCK"] = 2,["DRUID"] = 2,["ROGUE"] = 0,["PALADIN"] = 2,},
@@ -651,7 +656,7 @@ local function Event_ADDON_LOADED(arg1)--init!
 				Group={["HUNTER"] = 0,["WARRIOR"] = 2,["SHAMAN"] = 0,["MAGE"] = 0,["PRIEST"] = 0,["WARLOCK"] = 2,["DRUID"] = 0,["ROGUE"] = 2,["PALADIN"] = 0,},
 				Raid= {["HUNTER"] = 0,["WARRIOR"] = 2,["SHAMAN"] = 0,["MAGE"] = 0,["PRIEST"] = 0,["WARLOCK"] = 2,["DRUID"] = 0,["ROGUE"] = 2,["PALADIN"] = 0,},
 				icon="Interface\\ICONS\\INV_Misc_Food_09",
-			}			
+			}
 		end
 		if WaterDispenserDB.Version < 3 then
 			WaterDispenserDB.Version=3
@@ -664,15 +669,15 @@ local function Event_ADDON_LOADED(arg1)--init!
 			}
 			ADDON.DB.AutoFill=nil
 		end
-		
+
 		--always update name!
 		ADDON.DB.Item.MageWater.name=L.MageWater
 		ADDON.DB.Item.MageFood.name=L.MageFood
 		ADDON.DB.Item.WarlockHealthstone.name=L.WarlockHealthstone
-		
-		
+
+
 		ADDON.PopupDynamic=ADDON.Tool.CreatePopup()
-		
+
 		local function doDBSet(DB,var,value)
 			if value==nil then
 				DB[var]= not DB[var]
@@ -682,8 +687,8 @@ local function Event_ADDON_LOADED(arg1)--init!
 				DB[var]=false
 			end
 			print(ADDON.PREFIX,"Set "..var.." to "..tostring(DB[var]))
-		end		
-		
+		end
+
 		ADDON.Tool.SlashCommand({"/wd","/waterdispenser"},{
 			{"auto","",{
 					{"solo",  "", {{"%",L.slashAutoFillSolo,doDBSet,ADDON.DB,"AutoFillSolo"}}},
@@ -695,9 +700,9 @@ local function Event_ADDON_LOADED(arg1)--init!
 			{"about",L.slashAbout,ADDON.Options.Open,2},
 			{{"config","setup","options"},L.slashConfig,ADDON.Options.Open,1},
 		})
-		
-		ADDON.OptionsInit()		
-				
+
+		ADDON.OptionsInit()
+
 		print("|cFFFF1C1C Loaded: "..GetAddOnMetadata(TOCNAME, "Title") .." ".. GetAddOnMetadata(TOCNAME, "Version") .." by "..GetAddOnMetadata(TOCNAME, "Author"))
 	end
 end
@@ -707,42 +712,42 @@ end
 
 local function Event_SPELLS_CHANGED()
 	--make sure, that every item is known!
-	if DEBUGMODE then print("GET ITEM IDS")	end	
-	
+	if DEBUGMODE then print("GET ITEM IDS")	end
+
 	for id,repId in pairs(ADDON.CombineItemId) do
 		GetItemInfo(id)
-		GetItemInfo(repId)		
-		if DEBUGMODE then print("combine:",id,repId)	end	
+		GetItemInfo(repId)
+		if DEBUGMODE then print("combine:",id,repId)	end
 	end
-	
+
 	for typ,list in pairs(ADDON.SpellList) do
 		for spellId,itemId in pairs(list) do
 			GetItemInfo(itemId)
-			if DEBUGMODE then print("spelllist:",itemId)	end	
+			if DEBUGMODE then print("spelllist:",itemId)	end
 		end
 	end
-	
-	if ADDON and ADDON.DB and ADDON.DB.Item then 
+
+	if ADDON and ADDON.DB and ADDON.DB.Item then
 		for id,list in pairs(ADDON.DB.Item) do
 			local i=tonumber(id) or 0
 			if i>0 then
 				GetItemInfo(i)
-				if DEBUGMODE then print("saved:",i)	end	
+				if DEBUGMODE then print("saved:",i)	end
 			end
 		end
 	end
-	
+
 	for bag=BACKPACK_CONTAINER , NUM_BAG_SLOTS do
 		for slot=1,C_Container.GetContainerNumSlots(bag) do
 			local itemID = C_Container.GetContainerItemID(bag,slot)
-			if itemID then 
+			if itemID then
 				GetItemInfo(itemID)
-				if DEBUGMODE then print("bag:",itemID)	end	
+				if DEBUGMODE then print("bag:",itemID)	end
 			end
 		end
 	end
-	
-	
+
+
 end
 
 ADDON.Tool.RegisterEvent("ADDON_LOADED",Event_ADDON_LOADED)
@@ -773,17 +778,17 @@ local function BtnCreate(frame,text,func,anchorFrame,anchorPos,x,y,secure)
 	button=CreateFrame("Button", nil, frame, secure and "UIPanelButtonTemplate,SecureActionButtonTemplate" or "UIPanelButtonTemplate"  )
 	button:SetText(text)
 	button:SetWidth( button:GetTextWidth()+20 )
-	
+
 	button:SetPoint("TOPLEFT",anchorFrame,anchorPos,x or 0,y or 0)
-	
-	if secure then 
+
+	if secure then
 		button:SetAttribute("type","macro")
 		button:SetAttribute("macrotext","/script print(1)")
 		button.SetSpell=_setSpell
 	else
 		button:SetScript("OnClick", func)
 	end
-	
+
 	return button
 end
 
@@ -791,14 +796,14 @@ function ADDON.CreateTradeButtonsFrame()
 	local frame = CreateFrame("Frame", nil, UIParent)
 	--[[frame:SetBackdrop({
         bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
-        tile = true,        
+        tile = true,
     })
 	--]]
-	
+
 	frame:EnableMouse(false)
 	frame:SetPoint("CENTER")
 	frame:SetSize(400, 200)
-	
+
 	frame.BtnClear=BtnCreate(frame,L.ClearTrade,ADDON.ClearTrade,frame,"TOPLEFT")
 	frame.BtnFill=BtnCreate(frame,L.FillTrade,function() ADDON.FillTrade(true) end, frame.BtnClear,"BOTTOMLEFT")
 	frame.BtnConfig=BtnCreate(frame,L.Config,function() ADDON.Options.Open(1) end, frame.BtnFill,"BOTTOMLEFT")
@@ -806,14 +811,14 @@ function ADDON.CreateTradeButtonsFrame()
 	frame.BtnSpell1=BtnCreate(frame," ", nil, frame.BtnAccept,"BOTTOMLEFT",0,-5, true)
 	frame.BtnSpell2=BtnCreate(frame," ", nil, frame.BtnSpell1,"BOTTOMLEFT",0,0, true)
 	frame.BtnSpell3=BtnCreate(frame," ", nil, frame.BtnSpell2,"BOTTOMLEFT",0,0, true)
-	
+
 	frame.Btn={}
 	frame.Btn.MageWater=frame.BtnSpell1
-	frame.Btn.MageFood=frame.BtnSpell2	
+	frame.Btn.MageFood=frame.BtnSpell2
 	frame.Btn.WarlockHealthstone=frame.BtnSpell3
 	frame.Btn.PickLock=frame.BtnSpell3
 	frame:Hide()
-	
+
 	function frame:ShowParent(parent)
 		self:SetParent(parent)
 		self:ClearAllPoints()
