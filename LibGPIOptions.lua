@@ -622,10 +622,7 @@ function Options.AddSpace(factor)
 	Options.NextRelativY=Options.NextRelativY-20*(factor or 1)
 end
 
-function Options.Open(panel)
-	if panel==nil or panel > #Options.Panel then panel = 1 end
-	InterfaceOptionsFrame_OpenToCategory(Options.Panel[#Options.Panel])
-	InterfaceOptionsFrame_OpenToCategory(Options.Panel[#Options.Panel])
-	InterfaceOptionsFrame_OpenToCategory(Options.Panel[panel])
+function Options.Open()
+	Settings.OpenToCategory(Addon.Title)
 end
 

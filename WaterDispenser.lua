@@ -806,7 +806,7 @@ function ADDON.CreateTradeButtonsFrame()
 
 	frame.BtnClear=BtnCreate(frame,L.ClearTrade,ADDON.ClearTrade,frame,"TOPLEFT")
 	frame.BtnFill=BtnCreate(frame,L.FillTrade,function() ADDON.FillTrade(true) end, frame.BtnClear,"BOTTOMLEFT")
-	frame.BtnConfig=BtnCreate(frame,L.Config,function() ADDON.Options.Open(1) end, frame.BtnFill,"BOTTOMLEFT")
+	frame.BtnConfig=BtnCreate(frame,L.Config,function() ADDON.Options.Open() end, frame.BtnFill,"BOTTOMLEFT")
 	frame.BtnAccept=BtnCreate(frame,L.AcceptTrade, AcceptTrade, frame.BtnConfig,"BOTTOMLEFT",0,-5)
 	frame.BtnSpell1=BtnCreate(frame," ", nil, frame.BtnAccept,"BOTTOMLEFT",0,-5, true)
 	frame.BtnSpell2=BtnCreate(frame," ", nil, frame.BtnSpell1,"BOTTOMLEFT",0,0, true)
